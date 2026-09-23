@@ -1,0 +1,21 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: movie-service
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:5432/movies_db
+    username: ${DB_USER:movies}
+    password: ${DB_PASSWORD:movies}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 2MB
+
+app:
+  uploads-dir: ${UPLOADS_DIR:./uploads}

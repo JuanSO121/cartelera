@@ -1,0 +1,2 @@
+CREATE DATABASE movies_db;
+CREATE DATABASE rentals_db;
