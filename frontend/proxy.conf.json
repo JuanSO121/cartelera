@@ -1,0 +1,6 @@
+{
+  "/api/movies":  { "target": "http://localhost:8081", "secure": false },
+  "/api/admin":   { "target": "http://localhost:8081", "secure": false },
+  "/uploads":     { "target": "http://localhost:8081", "secure": false },
+  "/api/rentals": { "target": "http://localhost:8082", "secure": false }
+}
