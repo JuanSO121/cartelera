@@ -1,0 +1,76 @@
+// Tokens del área pública (modo claro). Los componentes hijos los heredan como variables CSS.
+:host {
+  --c-bg: #f3f5f9;
+  --c-surface: #ffffff;
+  --c-surface-alt: #e8ecf3;
+  --c-line: #d5dbe6;
+  --c-text: #121a2b;
+  --c-muted: #586174;
+  --c-accent: #e7b75f; // latón: botón principal
+  --c-accent-strong: #9a6b12; // latón oscuro: estrella y foco sobre fondo claro
+  --c-star: var(--c-accent-strong);
+  --c-on-image: #f7f3ea; // texto sobre portadas
+  --c-on-image-muted: #d3d8e3;
+  --font-display: 'Big Shoulders', 'Arial Narrow', sans-serif;
+  --font-body: 'Figtree', system-ui, sans-serif;
+  --radius: 14px;
+
+  display: block;
+  min-height: 100vh;
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: var(--font-body);
+  color-scheme: light;
+}
+
+.bar,
+.content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-inline: 24px;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-block: 16px; // menos aire antes de "En cartelera"
+}
+
+.brand {
+  font: 800 1.75rem / 1 var(--font-display);
+  color: var(--c-text);
+  text-decoration: none;
+}
+
+// Enlace para el equipo, no para el público del catálogo: se le da mejor affordance
+// (icono) sin subirle peso visual, para no competir con la jerarquía del catálogo.
+.admin-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--c-muted);
+  font-size: 0.9375rem;
+  text-decoration: none;
+
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+  }
+}
+
+.admin-link:hover {
+  color: var(--c-text);
+}
+
+.brand:focus-visible,
+.admin-link:focus-visible {
+  outline: 2px solid var(--c-accent-strong);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.content {
+  padding-bottom: 64px;
+}

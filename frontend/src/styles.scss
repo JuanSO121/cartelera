@@ -37,3 +37,10 @@ body {
   height: 100%;
 }
 /* You can add global styles to this file, and also import other style files */
+.snackbar-error {
+  @include mat.snack-bar-overrides((
+    container-color: #8c1d18,
+    supporting-text-color: #ffffff,
+    button-color: #ffdad6,
+  ));
+}

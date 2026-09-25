@@ -1,0 +1,308 @@
+:host {
+  display: block;
+  // Los paneles entran desde fuera del borde: se recorta para no generar scroll horizontal.
+  overflow-x: clip;
+}
+
+.strip {
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --slide: 64px;
+
+  display: flex;
+  gap: 10px;
+  height: clamp(420px, 62vh, 560px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  // Sentido del deslizamiento: "siguiente" entra por la derecha, "anterior" por la izquierda.
+  &[data-motion='next'] {
+    --dx: var(--slide);
+  }
+  &[data-motion='prev'] {
+    --dx: calc(var(--slide) * -1);
+  }
+}
+
+// Salida: mientras carga la otra página, la franja actual se desliza en sentido contrario.
+// La transición solo existe en este estado, así al terminar de cargar no "rebota" de vuelta.
+.strip.busy[data-motion] {
+  transform: translate(calc(var(--dx) * -0.75), calc(var(--dy, 0px) * -0.75));
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 200ms ease-in,
+    opacity 200ms ease-in;
+}
+
+// Entrada: los paneles nuevos aparecen en cascada. Solo se aplica cuando ya no está cargando,
+// para que no se repita sobre los paneles viejos que aún están saliendo.
+.strip:not(.busy)[data-motion] .panel {
+  animation: panel-in 420ms var(--ease) backwards;
+  animation-delay: calc(var(--i, 0) * 30ms);
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translate(var(--dx, 0px), var(--dy, 0px));
+  }
+}
+
+.panel {
+  position: relative;
+  isolation: isolate; // las capas internas (scrim, brillo, texto) no se mezclan con nada de fuera
+  flex: 1 1 0;
+  min-width: 52px;
+  max-width: 120px; // con pocos resultados, los paneles no se estiran de más
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--c-surface-alt);
+  // Sombra inferior + un leve brillo superior (::before): antes eran rectángulos
+  // planos de color; esto les da algo de volumen sin exagerar.
+  box-shadow: 0 10px 18px -10px rgb(18 26 43 / 0.28);
+  transition:
+    flex-grow 480ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    max-width 480ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    margin 480ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    box-shadow 300ms,
+    transform 300ms;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    z-index: 2;
+    height: 40%;
+    background: linear-gradient(to bottom, rgb(255 255 255 / 0.16), transparent);
+    pointer-events: none;
+  }
+
+  &.expanded {
+    flex-grow: 7;
+    max-width: 760px;
+    // El seleccionado se levanta un poco y gana un aro dorado: es el mismo lenguaje
+    // que usan Apple TV o Disney+ para marcar "esto es lo que estás mirando".
+    box-shadow:
+      0 18px 34px -12px rgb(18 26 43 / 0.32),
+      0 0 0 2px var(--c-accent);
+    transform: translateY(-6px);
+  }
+
+  // Sólo el tramo junto al panel expandido se abre más: el resto de la tira se mantiene
+  // compacta, como un carrete. Un gap parejo de 24px en toda la tira se veía desperdigado.
+  &.expanded {
+    margin-inline: 7px; // 10px de gap + 7px = 17px por lado ≈ 24px de separación total
+  }
+}
+
+.trigger {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 3px solid var(--c-accent);
+    outline-offset: -3px;
+    border-radius: var(--radius);
+  }
+}
+
+.art {
+  position: absolute;
+  inset: 0;
+  transition: filter 200ms;
+
+  // Antes saturate(0.75) brightness(0.8): con portadas reales, apagaba demasiado la imagen.
+  // Se suaviza para que en un vistazo ya se distinga la película, no solo su color dominante.
+  .panel:not(.expanded) & {
+    filter: saturate(0.9) brightness(0.92);
+  }
+
+  .panel:not(.expanded):hover &,
+  .panel:not(.expanded):focus-within & {
+    filter: none;
+  }
+}
+
+// Scrim delgado y fijo (no todo el filtro anterior) solo para que el nombre, al aparecer
+// en hover/foco, tenga contraste garantizado sin taparle la portada al resto del panel.
+.panel:not(.expanded)::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 1;
+  height: 45%;
+  background: linear-gradient(to top, rgb(12 17 30 / 0.75), transparent);
+  pointer-events: none;
+}
+
+// Título de los paneles plegados: oculto por defecto en escritorio, aparece con
+// hover o foco. El texto rotado permanente se leía con esfuerzo; como un solo tap
+// ya expande el panel y muestra el título completo, esconderlo hasta que haga falta
+// no pierde información, solo limpia la tira cuando nadie la está mirando de cerca.
+.label {
+  position: absolute;
+  left: 50%;
+  bottom: 20px;
+  z-index: 2;
+  max-height: calc(100% - 40px);
+  overflow: hidden;
+  writing-mode: vertical-rl;
+  transform: translateX(-50%) rotate(180deg);
+  font: 700 1.375rem / 1.2 var(--font-display);
+  color: var(--c-on-image);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 10px rgb(0 0 0 / 0.55);
+  opacity: 0;
+  transition: opacity 200ms;
+}
+
+.panel:not(.expanded):hover .label,
+.panel:not(.expanded):focus-within .label {
+  opacity: 1;
+}
+
+.details {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 1;
+  padding: 120px 32px 32px;
+  // Degradado oscuro solo bajo el texto: garantiza contraste con cualquier portada.
+  background: linear-gradient(to top, rgb(12 17 30 / 0.9) 45%, rgb(12 17 30 / 0.55) 75%, transparent);
+  color: var(--c-on-image);
+  --c-star: var(--c-accent);
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+  transition:
+    opacity 240ms 140ms,
+    transform 240ms 140ms;
+
+  .expanded & {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+}
+
+h2 {
+  margin: 0 0 12px;
+  // 3rem (48px) → 2.625rem (42px): antes competía en peso con "En cartelera"
+  // en vez de leerse claramente como un nivel por debajo.
+  font: 800 clamp(1.85rem, 3vw, 2.625rem) / 0.95 var(--font-display);
+}
+
+.description {
+  max-width: 52ch;
+  margin: 14px 0 22px;
+  color: var(--c-on-image-muted);
+  font-size: 1.0625rem; // antes heredaba el tamaño base; con el título más chico, se achicaba de más
+  font-weight: 500; // más presencia frente al título, que ahora pesa menos
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  height: 42px;
+  padding: 0 20px;
+  border-radius: 999px;
+  background: var(--c-accent);
+  color: var(--c-text);
+  font-weight: 600;
+  text-decoration: none;
+
+  &:focus-visible {
+    outline: 2px solid var(--c-on-image);
+    outline-offset: 3px;
+  }
+}
+
+// En pantallas pequeñas la franja se vuelve vertical.
+@media (max-width: 720px) {
+  .strip {
+    flex-direction: column;
+    height: auto;
+    gap: 8px;
+  }
+
+  .panel {
+    flex: none;
+    height: 76px;
+    max-width: none;
+    transition: height 420ms cubic-bezier(0.2, 0.7, 0.2, 1);
+
+    &.expanded {
+      height: 460px;
+      max-width: none;
+      margin-inline: 0;
+      margin-block: 7px; // el gap extra pasa de horizontal a vertical en la pila móvil
+      transform: none; // el desplazamiento hacia arriba es un gesto de fila horizontal
+    }
+  }
+
+  .label {
+    inset: 50% 20px auto;
+    max-height: none;
+    writing-mode: horizontal-tb;
+    transform: translateY(-50%);
+    text-align: left;
+    font-size: 1.25rem;
+    opacity: 1; // sin hover en táctil: aquí se mantiene visible, como antes
+  }
+
+  .details {
+    padding: 96px 20px 24px;
+  }
+
+
+  // En vertical el deslizamiento es de arriba abajo.
+  .strip {
+    --slide: 32px;
+
+    &[data-motion='next'] {
+      --dx: 0px;
+      --dy: var(--slide);
+    }
+    &[data-motion='prev'] {
+      --dx: 0px;
+      --dy: calc(var(--slide) * -1);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel,
+  .art,
+  .label,
+  .details,
+  .strip.busy[data-motion] {
+    transition: none;
+  }
+
+  // El aro y la sombra del seleccionado se mantienen (son estado, no movimiento);
+  // solo se quita el desplazamiento hacia arriba.
+  .panel.expanded {
+    transform: none;
+  }
+
+  .strip.busy[data-motion] {
+    transform: none;
+    opacity: 0.6;
+  }
+
+  .strip:not(.busy)[data-motion] .panel {
+    animation: none;
+  }
+}

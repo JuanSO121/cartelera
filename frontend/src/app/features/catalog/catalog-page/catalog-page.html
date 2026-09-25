@@ -1,0 +1,82 @@
+<section>
+  <header class="head">
+    <div>
+      <h1>En cartelera</h1>
+      <div class="range">
+        <p class="summary" aria-live="polite">
+          {{ loading() && !result() ? 'Cargando películas…' : summary() }}
+        </p>
+
+        @if (totalPages() > 1 && movies().length > 0) {
+          <nav class="pager" aria-label="Paginación del catálogo">
+            <button
+              type="button"
+              aria-label="Página anterior"
+              [attr.aria-disabled]="!hasPrevious() || loading()"
+              (click)="previousPage()"
+            >
+              <mat-icon aria-hidden="true">chevron_left</mat-icon>
+            </button>
+            <button
+              type="button"
+              aria-label="Página siguiente"
+              [attr.aria-disabled]="!hasNext() || loading()"
+              (click)="nextPage()"
+            >
+              <mat-icon aria-hidden="true">chevron_right</mat-icon>
+            </button>
+          </nav>
+        }
+      </div>
+    </div>
+
+    <div class="controls">
+      <label class="search">
+        <mat-icon aria-hidden="true">search</mat-icon>
+        <span class="visually-hidden">Buscar por nombre</span>
+        <input type="search" placeholder="Buscar por nombre" [formControl]="searchControl" autocomplete="off" />
+      </label>
+
+      <div class="sort" role="group" aria-label="Ordenar películas">
+        <button type="button" [attr.aria-pressed]="sort() === 'recent'" (click)="setSort('recent')">
+          Recientes
+        </button>
+        <button type="button" [attr.aria-pressed]="sort() === 'score'" (click)="setSort('score')">
+          Mejor puntuadas
+        </button>
+      </div>
+    </div>
+  </header>
+
+  @if (failed()) {
+    <div class="state">
+      <p>No se pudo cargar el catálogo.</p>
+      <button type="button" class="ghost" (click)="retry()">Reintentar</button>
+    </div>
+  } @else if (!result()) {
+    <div class="skeleton" aria-hidden="true">
+      @for (panel of skeletonPanels; track panel) {
+        <div></div>
+      }
+    </div>
+  } @else if (movies().length === 0) {
+    <div class="state">
+      @if (search()) {
+        <p>Ninguna película coincide con “{{ search() }}”.</p>
+        <button type="button" class="ghost" (click)="clearSearch()">Limpiar búsqueda</button>
+      } @else if (total() > 0) {
+        <p>Esta página no existe.</p>
+        <button type="button" class="ghost" (click)="goToPage(0)">Ir a la primera página</button>
+      } @else {
+        <p>Todavía no hay películas publicadas.</p>
+      }
+    </div>
+  } @else {
+    <app-movie-strip
+      [movies]="movies()"
+      [direction]="direction()"
+      [busy]="loading()"
+      [class.refreshing]="loading() && !direction()"
+    />
+  }
+</section>

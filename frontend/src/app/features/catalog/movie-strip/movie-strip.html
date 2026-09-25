@@ -1,0 +1,27 @@
+<ul class="strip" [class.busy]="busy()" [attr.data-motion]="direction()">
+  @for (movie of movies(); track movie.id; let i = $index) {
+    @let expanded = i === selected();
+    <li class="panel" [class.expanded]="expanded" [style.--i]="i">
+      <button
+        #trigger
+        type="button"
+        class="trigger"
+        [attr.aria-expanded]="expanded"
+        [attr.aria-controls]="'movie-panel-' + movie.id"
+        [attr.aria-label]="movie.title"
+        (click)="select(i, movie)"
+        (keydown)="onKeydown($event, i)"
+      >
+        <app-poster class="art" [title]="movie.title" [coverUrl]="movie.coverUrl" [showTitle]="false" />
+        <span class="label" aria-hidden="true">{{ movie.title }}</span>
+      </button>
+
+      <div class="details" [id]="'movie-panel-' + movie.id" [attr.inert]="expanded ? null : ''">
+        <h2>{{ movie.title }}</h2>
+        <app-score [value]="movie.score" />
+        <p class="description">{{ movie.description }}</p>
+        <a class="cta" [routerLink]="['/movies', movie.id]" [state]="{ fromCatalog: true }">Ver detalle</a>
+      </div>
+    </li>
+  }
+</ul>

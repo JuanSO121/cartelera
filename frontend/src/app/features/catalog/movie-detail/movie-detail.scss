@@ -1,0 +1,114 @@
+:host {
+  display: block;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 12px 0 20px;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  color: var(--c-muted);
+  font: 500 0.9375rem var(--font-body);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--c-text);
+  }
+}
+
+.back:focus-visible,
+.ghost:focus-visible {
+  outline: 2px solid var(--c-accent-strong);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.hero {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(200px, 300px) 1fr;
+  gap: 48px;
+  align-items: end;
+  padding: 40px;
+  overflow: hidden;
+  border: 1px solid var(--c-line);
+  border-radius: 18px;
+  background: var(--c-surface);
+}
+
+// La portada ampliada, desenfocada y muy suave tiñe el fondo con sus colores.
+.backdrop {
+  position: absolute;
+  inset: -60px;
+  z-index: -1;
+  background-size: cover;
+  background-position: center;
+  filter: blur(56px) saturate(1.3);
+  opacity: 0.3;
+}
+
+.poster {
+  aspect-ratio: 2 / 3;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgb(18 26 43 / 0.22);
+}
+
+h1 {
+  margin: 0 0 16px;
+  font: 800 clamp(2.75rem, 6vw, 4.5rem) / 0.95 var(--font-display);
+}
+
+.added {
+  margin: 14px 0 24px;
+  color: var(--c-muted);
+}
+
+.description {
+  max-width: 60ch;
+  margin: 0;
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  white-space: pre-line;
+}
+
+.skeleton {
+  height: 480px;
+  background: var(--c-surface-alt);
+  border-color: transparent;
+}
+
+.state {
+  padding: 72px 16px;
+  border: 1px dashed var(--c-line);
+  border-radius: var(--radius);
+  text-align: center;
+  color: var(--c-muted);
+}
+
+.ghost {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 18px;
+  border: 1px solid var(--c-line);
+  border-radius: 999px;
+  background: var(--c-surface);
+  color: var(--c-text);
+  text-decoration: none;
+}
+
+@media (max-width: 720px) {
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 24px;
+  }
+
+  .poster {
+    width: min(240px, 70%);
+  }
+}

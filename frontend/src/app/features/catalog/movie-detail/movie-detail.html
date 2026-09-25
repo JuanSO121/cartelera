@@ -1,0 +1,29 @@
+<article>
+  <button type="button" class="back" (click)="back()">
+    <mat-icon aria-hidden="true">arrow_back</mat-icon>
+    Volver al catálogo
+  </button>
+
+  @if (movie(); as m) {
+    <div class="hero">
+      @if (m.coverUrl) {
+        <div class="backdrop" [style.background-image]="'url(' + m.coverUrl + ')'" aria-hidden="true"></div>
+      }
+      <app-poster class="poster" [title]="m.title" [coverUrl]="m.coverUrl" [alt]="'Portada de ' + m.title" />
+
+      <div class="info">
+        <h1>{{ m.title }}</h1>
+        <app-score [value]="m.score" size="large" />
+        <p class="added">En cartelera desde el {{ m.createdAt | date: 'longDate' }}</p>
+        <p class="description">{{ m.description }}</p>
+      </div>
+    </div>
+  } @else if (notFound()) {
+    <div class="state">
+      <p>Esta película no está disponible.</p>
+      <a routerLink="/" class="ghost">Ir al catálogo</a>
+    </div>
+  } @else {
+    <div class="hero skeleton" aria-hidden="true"></div>
+  }
+</article>
