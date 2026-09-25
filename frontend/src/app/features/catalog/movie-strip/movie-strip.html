@@ -1,7 +1,26 @@
-<ul class="strip" [class.busy]="busy()" [attr.data-motion]="direction()">
+<ul #strip class="strip" [class.busy]="busy()" [attr.data-motion]="motion()">
+  @if (previousCount() > 0) {
+    <li class="tail">
+      <button
+        appStripTail
+        side="start"
+        label="Anteriores"
+        [disabled]="busy()"
+        [attr.aria-label]="'Ver las ' + previousCount() + ' películas anteriores'"
+        (click)="goPrevious()"
+      ></button>
+    </li>
+  }
+
   @for (movie of movies(); track movie.id; let i = $index) {
     @let expanded = i === selected();
-    <li class="panel" [class.expanded]="expanded" [style.--i]="i">
+    <li
+      #panel
+      class="panel"
+      [class.expanded]="expanded"
+      [style.--i]="i"
+      [style.--tint]="hueFor(movie.title)"
+    >
       <button
         #trigger
         type="button"
@@ -14,14 +33,36 @@
       >
         <app-poster class="art" [title]="movie.title" [coverUrl]="movie.coverUrl" [showTitle]="false" />
         <span class="label" aria-hidden="true">{{ movie.title }}</span>
+
+        <!-- Vista previa al pasar el mouse o enfocar: la puntuación completa ya vive en
+             el panel expandido, así que aquí es solo un adelanto decorativo. -->
+        <span class="peek-score" aria-hidden="true">
+          <app-score [value]="movie.score" />
+        </span>
       </button>
 
       <div class="details" [id]="'movie-panel-' + movie.id" [attr.inert]="expanded ? null : ''">
         <h2>{{ movie.title }}</h2>
         <app-score [value]="movie.score" />
         <p class="description">{{ movie.description }}</p>
-        <a class="cta" [routerLink]="['/movies', movie.id]" [state]="{ fromCatalog: true }">Ver detalle</a>
+        <a class="cta" [routerLink]="['/movies', movie.id]" [state]="{ fromCatalog: true }">
+          Ver detalle
+          <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+        </a>
       </div>
+    </li>
+  }
+
+  @if (nextCount() > 0) {
+    <li class="tail">
+      <button
+        appStripTail
+        side="end"
+        [label]="nextCount() + ' más'"
+        [disabled]="busy()"
+        [attr.aria-label]="'Ver las siguientes ' + nextCount() + ' películas'"
+        (click)="goNext()"
+      ></button>
     </li>
   }
 </ul>

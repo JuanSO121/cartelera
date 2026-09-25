@@ -1,7 +1,5 @@
 :host {
-  display: block;
-  // Los paneles entran desde fuera del borde: se recorta para no generar scroll horizontal.
-  overflow-x: clip;
+  display: flow-root; // evita que el margen negativo de .strip "se escape" y mueva el layout de fuera
 }
 
 .strip {
@@ -11,8 +9,17 @@
   display: flex;
   gap: 10px;
   height: clamp(420px, 62vh, 560px);
-  margin: 0;
-  padding: 0;
+  // Se recorta en los dos ejes (no solo en el horizontal): mezclar 'clip' con 'visible'
+  // es justo lo que forzaba el corte de sombra. El padding le da a las sombras un
+  // margen para respirar antes del borde de recorte, y el margen negativo lo
+  // compensa para que el resto de la página no se mueva ni un píxel.
+  overflow: clip;
+  padding-block: 40px;
+  margin-block: -40px;
+  // Lo mismo a los lados: 24px de aire para que la sombra y el aro del panel del extremo
+  // no se corten en seco. Coincide con el padding lateral de la página, así no se sale de ella.
+  padding-inline: 24px;
+  margin-inline: -24px;
   list-style: none;
 
   // Sentido del deslizamiento: "siguiente" entra por la derecha, "anterior" por la izquierda.
@@ -21,6 +28,11 @@
   }
   &[data-motion='prev'] {
     --dx: calc(var(--slide) * -1);
+  }
+  // Búsqueda u orden: no hay "sentido" horizontal, así que la lista nueva sube levemente.
+  &[data-motion='filter'] {
+    --dx: 0px;
+    --dy: 16px;
   }
 }
 
@@ -96,6 +108,11 @@
   }
 }
 
+.panel:not(.expanded):hover,
+.panel:not(.expanded):focus-within {
+  box-shadow: 0 14px 26px -12px rgb(18 26 43 / 0.35);
+}
+
 .trigger {
   position: absolute;
   inset: 0;
@@ -115,7 +132,9 @@
 .art {
   position: absolute;
   inset: 0;
-  transition: filter 200ms;
+  transition:
+    filter 200ms,
+    transform 260ms cubic-bezier(0.2, 0.7, 0.2, 1);
 
   // Antes saturate(0.75) brightness(0.8): con portadas reales, apagaba demasiado la imagen.
   // Se suaviza para que en un vistazo ya se distinga la película, no solo su color dominante.
@@ -126,6 +145,28 @@
   .panel:not(.expanded):hover &,
   .panel:not(.expanded):focus-within & {
     filter: none;
+    // El zoom se recorta con el overflow:hidden del panel; es el mismo gesto que usan
+    // las tarjetas de Netflix al pasar el mouse.
+    transform: scale(1.04);
+  }
+
+  // Tinte cromático: el mismo hash de color que usa el fondo de respaldo de Poster,
+  // ahora como una capa semitransparente sobre la portada real. Así cada película
+  // conserva su identidad de color incluso cuando ya no es una tarjeta plana, sino
+  // un "peek" real de su afiche.
+  .panel:not(.expanded) &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: hsl(var(--tint) 65% 45%);
+    mix-blend-mode: color;
+    opacity: 0.4;
+    transition: opacity 200ms;
+  }
+
+  .panel:not(.expanded):hover &::after,
+  .panel:not(.expanded):focus-within &::after {
+    opacity: 0.15; // se atenúa para que la imagen real gane protagonismo al mirarla de cerca
   }
 }
 
@@ -168,13 +209,49 @@
   opacity: 1;
 }
 
+// Adelanto de puntuación: aparece junto con el título al pasar el mouse o enfocar.
+// La información completa y accesible ya vive en el panel expandido; esto es decorativo.
+.peek-score {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  display: inline-flex;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgb(12 17 30 / 0.6);
+  color: var(--c-on-image);
+  --c-star: var(--c-accent);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity 200ms,
+    transform 200ms;
+
+  app-score {
+    transform: scale(0.82);
+    transform-origin: right center;
+  }
+}
+
+.panel:not(.expanded):hover .peek-score,
+.panel:not(.expanded):focus-within .peek-score {
+  opacity: 1;
+  transform: none;
+}
+
 .details {
   position: absolute;
   inset: auto 0 0;
   z-index: 1;
-  padding: 120px 32px 32px;
-  // Degradado oscuro solo bajo el texto: garantiza contraste con cualquier portada.
-  background: linear-gradient(to top, rgb(12 17 30 / 0.9) 45%, rgb(12 17 30 / 0.55) 75%, transparent);
+  padding: 160px 32px 32px;
+  // Antes un solo degradado lineal quedaba plano. Se suma uno radial detrás de donde
+  // cae el texto, para que se sienta integrado con la imagen y no superpuesto encima.
+  // El degradado lineal llega a transparente arriba: antes terminaba en 20% y dejaba
+  // un borde duro a media tarjeta, como si la sombra se cortara.
+  background:
+    radial-gradient(65% 90% at 25% 100%, rgb(12 17 30 / 0.4), transparent 70%),
+    linear-gradient(to top, rgb(12 17 30 / 0.75) 0%, rgb(12 17 30 / 0.45) 45%, transparent 100%);
   color: var(--c-on-image);
   --c-star: var(--c-accent);
   opacity: 0;
@@ -196,6 +273,9 @@ h2 {
   // 3rem (48px) → 2.625rem (42px): antes competía en peso con "En cartelera"
   // en vez de leerse claramente como un nivel por debajo.
   font: 800 clamp(1.85rem, 3vw, 2.625rem) / 0.95 var(--font-display);
+  // El degradado de arriba ahora es más liviano (20% en vez de 55-90%); esta sombra
+  // sostiene el contraste en portadas claras sin necesidad de oscurecer la imagen.
+  text-shadow: 0 2px 16px rgb(0 0 0 / 0.45);
 }
 
 .description {
@@ -215,13 +295,38 @@ h2 {
 .cta {
   display: inline-flex;
   align-items: center;
+  gap: 8px;
   height: 42px;
-  padding: 0 20px;
+  padding: 0 20px 0 22px;
   border-radius: 999px;
   background: var(--c-accent);
   color: var(--c-text);
   font-weight: 600;
   text-decoration: none;
+  box-shadow: 0 8px 18px -8px rgb(154 107 18 / 0.5);
+  // Corta y precisa, no lenta: una transición larga en un botón se siente como demora,
+  // no como elegancia. El carácter lo da el ícono y la sombra, no el tiempo de espera.
+  transition:
+    transform 160ms,
+    box-shadow 160ms;
+
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+    transition: transform 160ms;
+  }
+
+  &:hover,
+  &:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 22px -8px rgb(154 107 18 / 0.6);
+  }
+
+  &:hover mat-icon,
+  &:focus-visible mat-icon {
+    transform: translateX(3px);
+  }
 
   &:focus-visible {
     outline: 2px solid var(--c-on-image);
@@ -229,9 +334,23 @@ h2 {
   }
 }
 
+// Colas de continuación (ver StripTail): ancho fijo, sin fondo propio.
+.tail {
+  flex: none;
+  width: 64px;
+}
+
 // En pantallas pequeñas la franja se vuelve vertical.
 @media (max-width: 720px) {
   .strip {
+    // El componente lee estas alturas para centrar en pantalla el panel que se abre.
+    --collapsed-h: 76px;
+    --expanded-h: 460px;
+    --expanded-gap: 7px;
+
+    // El desplazamiento al abrir un panel lo calcula el componente; si el navegador además
+    // "ancla" el scroll mientras el panel de arriba se encoge, se corrige dos veces y se desfasa.
+    overflow-anchor: none;
     flex-direction: column;
     height: auto;
     gap: 8px;
@@ -239,17 +358,22 @@ h2 {
 
   .panel {
     flex: none;
-    height: 76px;
+    height: var(--collapsed-h);
     max-width: none;
     transition: height 420ms cubic-bezier(0.2, 0.7, 0.2, 1);
 
     &.expanded {
-      height: 460px;
+      height: var(--expanded-h);
       max-width: none;
       margin-inline: 0;
-      margin-block: 7px; // el gap extra pasa de horizontal a vertical en la pila móvil
+      margin-block: var(--expanded-gap); // el gap extra pasa de horizontal a vertical en la pila móvil
       transform: none; // el desplazamiento hacia arriba es un gesto de fila horizontal
     }
+  }
+
+  .tail {
+    width: auto;
+    padding-block: 8px;
   }
 
   .label {
@@ -259,7 +383,12 @@ h2 {
     transform: translateY(-50%);
     text-align: left;
     font-size: 1.25rem;
-    opacity: 1; // sin hover en táctil: aquí se mantiene visible, como antes
+  }
+
+  // Sin hover en táctil, el nombre de los plegados queda visible. El del expandido no:
+  // ya está el título grande, y mostrar ambos los superponía.
+  .panel:not(.expanded) .label {
+    opacity: 1;
   }
 
   .details {
@@ -287,6 +416,9 @@ h2 {
   .art,
   .label,
   .details,
+  .peek-score,
+  .cta,
+  .cta mat-icon,
   .strip.busy[data-motion] {
     transition: none;
   }

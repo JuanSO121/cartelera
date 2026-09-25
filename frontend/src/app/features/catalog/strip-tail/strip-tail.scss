@@ -1,0 +1,159 @@
+:host {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--c-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+:host(:disabled) {
+  cursor: progress;
+  opacity: 0.5;
+}
+
+:host(:focus-visible) {
+  outline: 3px solid var(--c-accent-strong);
+  outline-offset: 2px;
+  border-radius: var(--radius);
+}
+
+// Cada tira es más angosta, más baja y más tenue que la anterior: se lee como algo
+// que continúa y se aleja, sin necesidad de explicarlo con texto.
+.slivers {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+
+  :host(.start) & {
+    justify-content: flex-end;
+  }
+}
+
+.sliver {
+  flex: none;
+  width: calc(22px - var(--n) * 6px);
+  height: calc(100% - var(--n) * 8%);
+  border-radius: calc(10px - var(--n) * 2px);
+  background: linear-gradient(180deg, #d9dfea, #c5cddc);
+  opacity: calc(1 - var(--n) * 0.22);
+  transition: transform 260ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+// Al acercarse, las tiras se abren un poco hacia afuera: invita a seguir.
+:host(:hover:not(:disabled)) .sliver,
+:host(:focus-visible) .sliver {
+  transform: translateX(calc(var(--n) * 3px));
+}
+
+:host(.start:hover:not(:disabled)) .sliver,
+:host(.start:focus-visible) .sliver {
+  transform: translateX(calc(var(--n) * -3px));
+}
+
+.hint {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  transform: translateY(-50%);
+
+  :host(.start) & {
+    left: auto;
+    right: 0;
+  }
+}
+
+.chip {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--c-accent);
+  box-shadow: 0 6px 14px -6px rgb(154 107 18 / 0.55);
+  transition: transform 200ms;
+
+  :host(:hover:not(:disabled)) & {
+    transform: scale(1.08);
+  }
+
+  mat-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+  }
+}
+
+.text {
+  font: 600 0.75rem / 1 var(--font-body);
+  color: var(--c-muted);
+  white-space: nowrap;
+}
+
+// Móvil: la franja es vertical, así que las tiras son horizontales y se estrechan hacia abajo.
+@media (max-width: 720px) {
+  .slivers {
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 5px;
+    height: auto;
+
+    :host(.start) & {
+      justify-content: flex-end;
+    }
+  }
+
+  .sliver {
+    width: calc(100% - var(--n) * 8%);
+    height: calc(16px - var(--n) * 4px);
+  }
+
+  :host(:hover:not(:disabled)) .sliver,
+  :host(:focus-visible) .sliver {
+    transform: translateY(calc(var(--n) * 2px));
+  }
+
+  :host(.start:hover:not(:disabled)) .sliver,
+  :host(.start:focus-visible) .sliver {
+    transform: translateY(calc(var(--n) * -2px));
+  }
+
+  .hint {
+    position: static;
+    flex-direction: row;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 12px;
+    transform: none;
+
+    :host(.start) & {
+      margin: 0 0 12px;
+    }
+  }
+
+  :host(.start) {
+    display: flex;
+    flex-direction: column-reverse;
+  }
+
+  .text {
+    font-size: 0.9375rem;
+    color: var(--c-text);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sliver,
+  .chip {
+    transition: none;
+  }
+}

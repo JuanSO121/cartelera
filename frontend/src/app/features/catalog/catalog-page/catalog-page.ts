@@ -16,11 +16,11 @@ import {
 } from 'rxjs';
 import { PublicMoviesApi } from '../../../core/api/public-movies-api';
 import { MovieSort, Page, PublicMovie, PublicMovieQuery } from '../../../core/models/movie';
-import { MovieStrip, PageDirection } from '../movie-strip/movie-strip';
+import { MovieStrip, StripMotion } from '../movie-strip/movie-strip';
 
 const PAGE_SIZE = 8;
-/** Duración de la salida de la franja; la nueva página no se muestra antes para no cortarla. */
-const PAGE_EXIT_MS = 200;
+/** Duración de la salida de la franja; la nueva lista no se muestra antes para no cortarla. */
+const EXIT_MS = 200;
 
 @Component({
   selector: 'app-catalog-page',
@@ -58,9 +58,22 @@ export class CatalogPage {
   protected readonly totalPages = computed(() => this.result()?.totalPages ?? 0);
   protected readonly hasPrevious = computed(() => this.page() > 0);
   protected readonly hasNext = computed(() => this.page() + 1 < this.totalPages());
+  protected readonly previousCount = computed(() => (this.hasPrevious() ? PAGE_SIZE : 0));
+  protected readonly nextCount = computed(() =>
+    Math.max(0, Math.min(PAGE_SIZE, this.total() - (this.page() + 1) * PAGE_SIZE)),
+  );
 
-  /** Sentido de la última paginación (`null` si el cambio fue por búsqueda, orden o reintento). */
-  protected readonly direction = signal<PageDirection | null>(null);
+  // Puntos en vez de flechas mientras el catálogo sea chico: una fila de más de ~6 puntos
+  // deja de leerse de un vistazo y pierde su gracia. Pasado ese umbral, vuelve al patrón
+  // de flechas + contador, que sí escala.
+  private static readonly DOT_THRESHOLD = 6;
+  protected readonly useDots = computed(
+    () => this.totalPages() > 1 && this.totalPages() <= CatalogPage.DOT_THRESHOLD,
+  );
+  protected readonly pageIndices = computed(() => Array.from({ length: this.totalPages() }, (_, i) => i));
+
+  /** Animación del último cambio: paginación, búsqueda/orden, o ninguna (carga inicial o reintento). */
+  protected readonly motion = signal<StripMotion | null>(null);
   private lastQuery: PublicMovieQuery | null = null;
 
   /** "16 películas" en una sola página; "9–16 de 16 películas" cuando hay varias. */
@@ -104,7 +117,7 @@ export class CatalogPage {
     toObservable(this.query)
       .pipe(
         tap((query) => {
-          this.direction.set(this.directionFor(query));
+          this.motion.set(this.motionFor(query));
           this.lastQuery = query;
           this.loading.set(true);
           this.failed.set(false);
@@ -116,9 +129,9 @@ export class CatalogPage {
               return of(null);
             }),
           );
-          // Al paginar se espera a que termine la animación de salida, aunque la API responda antes.
-          return this.direction()
-            ? forkJoin([request$, timer(PAGE_EXIT_MS)]).pipe(map(([page]) => page))
+          // Con animación se espera a que termine la salida, aunque la API responda antes.
+          return this.motion()
+            ? forkJoin([request$, timer(EXIT_MS)]).pipe(map(([page]) => page))
             : request$;
         }),
         takeUntilDestroyed(),
@@ -139,6 +152,12 @@ export class CatalogPage {
 
   protected goToPage(page: number): void {
     this.updateParams({ page: page > 0 ? page + 1 : null });
+  }
+
+  protected selectPage(page: number): void {
+    if (page !== this.page() && !this.loading()) {
+      this.goToPage(page);
+    }
   }
 
   protected previousPage(): void {
@@ -162,13 +181,19 @@ export class CatalogPage {
     this.retryCount.update((count) => count + 1);
   }
 
-  /** Deduce el sentido comparando con la consulta anterior; así también sirve el botón atrás. */
-  private directionFor(query: PublicMovieQuery): PageDirection | null {
+  /** Deduce la animación comparando con la consulta anterior; así también sirve el botón atrás. */
+  private motionFor(query: PublicMovieQuery): StripMotion | null {
     const last = this.lastQuery;
-    if (!last || last.search !== query.search || last.sort !== query.sort || last.page === query.page) {
-      return null;
+    if (!last) {
+      return null; // carga inicial: el esqueleto ya hace de transición
     }
-    return query.page > last.page ? 'next' : 'prev';
+    if (last.search !== query.search || last.sort !== query.sort) {
+      return 'filter';
+    }
+    if (last.page !== query.page) {
+      return query.page > last.page ? 'next' : 'prev';
+    }
+    return null; // reintento de la misma consulta
   }
 
   private updateParams(queryParams: Params, replaceUrl = false): void {

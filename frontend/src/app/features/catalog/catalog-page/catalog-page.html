@@ -8,10 +8,29 @@
         </p>
 
         @if (totalPages() > 1 && movies().length > 0) {
-          <nav class="pager" aria-label="Paginación del catálogo">
+          @if (useDots()) {
+            <nav class="dots" aria-label="Páginas del catálogo">
+              @for (i of pageIndices(); track i) {
+                <button
+                  type="button"
+                  class="dot"
+                  [class.active]="i === page()"
+                  [attr.aria-current]="i === page() ? 'page' : null"
+                  [attr.aria-label]="'Página ' + (i + 1)"
+                  [attr.aria-disabled]="loading()"
+                  (click)="selectPage(i)"
+                ></button>
+              }
+            </nav>
+          }
+
+          <!-- Con puntos, en escritorio las flechas sobran; en móvil se muestran siempre,
+               fijas a los lados, para pasar de página sin volver arriba. -->
+          <nav class="pager" [class.mobile-only]="useDots()" aria-label="Paginación del catálogo">
             <button
               type="button"
               aria-label="Página anterior"
+              [class.edge]="!hasPrevious()"
               [attr.aria-disabled]="!hasPrevious() || loading()"
               (click)="previousPage()"
             >
@@ -20,6 +39,7 @@
             <button
               type="button"
               aria-label="Página siguiente"
+              [class.edge]="!hasNext()"
               [attr.aria-disabled]="!hasNext() || loading()"
               (click)="nextPage()"
             >
@@ -74,9 +94,13 @@
   } @else {
     <app-movie-strip
       [movies]="movies()"
-      [direction]="direction()"
+      [motion]="motion()"
       [busy]="loading()"
-      [class.refreshing]="loading() && !direction()"
+      [previousCount]="previousCount()"
+      [nextCount]="nextCount()"
+      [class.refreshing]="loading() && !motion()"
+      (previous)="previousPage()"
+      (next)="nextPage()"
     />
   }
 </section>

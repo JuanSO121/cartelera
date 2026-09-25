@@ -36,6 +36,11 @@ h1 {
   display: inline-flex;
   gap: 6px;
 
+  // Con puntos visibles, en escritorio las flechas se ocultan (ver el @media de móvil).
+  &.mobile-only {
+    display: none;
+  }
+
   button {
     display: grid;
     place-items: center;
@@ -66,6 +71,55 @@ h1 {
     width: 22px;
     height: 22px;
     font-size: 22px;
+  }
+}
+
+// Puntos: aparecen solo con pocas páginas (ver DOT_THRESHOLD en el componente).
+// El punto visual es chico a propósito, pero el botón tiene un área de toque mayor.
+.dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+
+  button {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+
+    &::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--c-line);
+      transition:
+        background-color 150ms,
+        transform 150ms;
+    }
+
+    &:hover::before {
+      background: var(--c-accent-strong);
+    }
+
+    &.active::before {
+      background: var(--c-accent-strong);
+      transform: scale(1.35);
+    }
+
+    &[aria-disabled='true'] {
+      cursor: default;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--c-accent-strong);
+      outline-offset: 2px;
+      border-radius: 50%;
+    }
   }
 }
 
@@ -213,7 +267,9 @@ app-movie-strip.refreshing {
 
   // En vertical el rango deja de mostrar flechas junto al texto: aparecen fijas a
   // los lados de la franja, así no hay que volver arriba para pasar de página.
-  .pager {
+  .pager,
+  .pager.mobile-only {
+    display: inline-flex;
     position: fixed;
     top: 50%;
     left: 12px;
@@ -231,6 +287,11 @@ app-movie-strip.refreshing {
       background: var(--c-surface);
       box-shadow: 0 2px 10px rgb(18 26 43 / 0.18);
       pointer-events: auto;
+    }
+
+    // Fija sobre el contenido, una flecha sin destino (primera o última página) solo estorba.
+    button.edge {
+      visibility: hidden;
     }
   }
 
