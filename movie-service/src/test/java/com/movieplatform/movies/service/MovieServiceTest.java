@@ -14,7 +14,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.LongStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -76,6 +78,28 @@ class MovieServiceTest {
                 .isInstanceOf(InvalidRequestException.class);
 
         verifyNoInteractions(repository);
+    }
+
+    @Test
+    void publishedIdsOnlyQueriesPublishedMovies() {
+        when(repository.findIdsByIdInAndStatus(List.of(15L, 17L), MovieStatus.PUBLISHED)).thenReturn(List.of(15L));
+
+        assertThat(movieService.findPublishedIds(List.of(15L, 17L))).containsExactly(15L);
+    }
+
+    @Test
+    void publishedIdsWithEmptyListDoesNotQuery() {
+        assertThat(movieService.findPublishedIds(List.of())).isEmpty();
+
+        verifyNoInteractions(repository);
+    }
+
+    @Test
+    void publishedIdsRejectsTooManyIds() {
+        List<Long> ids = LongStream.rangeClosed(1, MovieService.MAX_AVAILABILITY_IDS + 1).boxed().toList();
+
+        assertThatThrownBy(() -> movieService.findPublishedIds(ids))
+                .isInstanceOf(InvalidRequestException.class);
     }
 
     @Test

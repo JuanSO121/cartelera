@@ -13,6 +13,11 @@ export const CATALOG_ROUTES: Routes = [
         loadComponent: () => import('./catalog-page/catalog-page').then((m) => m.CatalogPage),
       },
       {
+        path: 'my-rentals',
+        title: 'Mis alquileres | Cartelera',
+        loadComponent: () => import('./my-rentals/my-rentals').then((m) => m.MyRentals),
+      },
+      {
         path: 'movies/:id',
         title: 'Película | Cartelera',
         loadComponent: () => import('./movie-detail/movie-detail').then((m) => m.MovieDetail),

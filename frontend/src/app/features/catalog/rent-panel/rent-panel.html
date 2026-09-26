@@ -1,0 +1,76 @@
+@switch (state()) {
+  @case ('idle') {
+    <button #openButton type="button" class="rent" (click)="open()">
+      <mat-icon aria-hidden="true">confirmation_number</mat-icon>
+      Alquilar por 48 horas
+    </button>
+    <p class="hint">Sin registro: solo tu nombre y tu correo.</p>
+  }
+
+  @case ('done') {
+    @if (rental(); as r) {
+      <!-- La sombra va en un contenedor: la máscara de las muescas recortaría un box-shadow. -->
+      <div class="ticket-shadow">
+      <div #ticket class="ticket" role="status" tabindex="-1">
+        <div class="ticket-main">
+          <p class="ticket-kicker">Alquiler confirmado, {{ greeting() }}</p>
+          <p class="ticket-title">{{ r.movieTitle }}</p>
+          <dl class="ticket-data">
+            <div>
+              <dt>A nombre de</dt>
+              <dd>{{ holder() }}</dd>
+            </div>
+            <div>
+              <dt>Válido hasta</dt>
+              <dd>{{ r.dueDate | date: "EEEE d 'de' MMMM, HH:mm" }}</dd>
+            </div>
+          </dl>
+        </div>
+        <div class="ticket-stub" aria-hidden="true">
+          <span class="stub-hours">48</span>
+          <span class="stub-unit">horas</span>
+        </div>
+      </div>
+      </div>
+      <a class="link" routerLink="/my-rentals" [state]="{ email: email() }">
+        Ver mis alquileres
+        <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+      </a>
+    }
+  }
+
+  @default {
+    <form class="form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="fields">
+        <label class="field">
+          <span class="label">Nombre</span>
+          <input #nameInput formControlName="name" autocomplete="name" maxlength="100" />
+          @if (form.controls.name.touched && form.controls.name.invalid) {
+            <small class="error">Escribe tu nombre.</small>
+          }
+        </label>
+
+        <label class="field">
+          <span class="label">Correo</span>
+          <input type="email" formControlName="email" autocomplete="email" maxlength="150" />
+          @if (form.controls.email.touched && form.controls.email.hasError('required')) {
+            <small class="error">Escribe tu correo.</small>
+          } @else if (form.controls.email.touched && form.controls.email.invalid) {
+            <small class="error">Revisa el formato del correo.</small>
+          }
+        </label>
+
+        <button type="submit" class="rent confirm" [disabled]="state() === 'saving'">
+          {{ state() === 'saving' ? 'Alquilando…' : 'Confirmar' }}
+        </button>
+      </div>
+
+      <p class="hint">
+        Con el correo podrás consultar o devolver tus alquileres.
+        <button type="button" class="text-button" [disabled]="state() === 'saving'" (click)="cancel()">
+          Cancelar
+        </button>
+      </p>
+    </form>
+  }
+}

@@ -32,7 +32,9 @@
   display: grid;
   grid-template-columns: minmax(200px, 300px) 1fr;
   gap: 48px;
-  align-items: end;
+  // Arriba, no abajo: al desplegar el alquiler el bloque de texto crece hacia abajo y
+  // ni la portada ni el título se mueven.
+  align-items: start;
   padding: 40px;
   overflow: hidden;
   border: 1px solid var(--c-line);
@@ -55,6 +57,10 @@
   aspect-ratio: 2 / 3;
   border-radius: 12px;
   box-shadow: 0 20px 40px rgb(18 26 43 / 0.22);
+}
+
+.info {
+  padding-top: 12px;
 }
 
 h1 {

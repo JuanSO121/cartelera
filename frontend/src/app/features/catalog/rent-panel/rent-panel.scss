@@ -1,0 +1,256 @@
+:host {
+  display: block;
+  margin-top: 28px;
+}
+
+.rent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--c-accent);
+  color: var(--c-text);
+  font: 600 1rem var(--font-body);
+  white-space: nowrap;
+  box-shadow: 0 8px 18px -8px rgb(154 107 18 / 0.5);
+  cursor: pointer;
+  transition: transform 160ms, box-shadow 160ms;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 22px -8px rgb(154 107 18 / 0.6);
+  }
+
+  &:disabled {
+    cursor: progress;
+    opacity: 0.7;
+  }
+}
+
+.rent:focus-visible,
+.text-button:focus-visible,
+.link:focus-visible {
+  outline: 2px solid var(--c-accent-strong);
+  outline-offset: 3px;
+}
+
+.hint {
+  margin: 10px 0 0;
+  font-size: 0.875rem;
+  color: var(--c-muted);
+}
+
+// El formulario no es una caja aparte: los campos viven sobre el tinte de la tarjeta,
+// con un fondo blanco translúcido que deja pasar sus colores.
+.form {
+  max-width: 640px;
+  animation: reveal 220ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr auto;
+  align-items: start;
+  gap: 10px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.field input {
+  height: 46px;
+  padding: 0 16px;
+  box-sizing: border-box;
+  border: 1px solid rgb(18 26 43 / 0.14);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.72);
+  backdrop-filter: blur(8px);
+  color: var(--c-text);
+  font: 400 1rem var(--font-body);
+
+  &:focus {
+    outline: 2px solid var(--c-accent-strong);
+    outline-offset: 0;
+    border-color: transparent;
+    background: rgb(255 255 255 / 0.92);
+  }
+
+  &.ng-touched.ng-invalid {
+    border-color: #b3261e;
+  }
+}
+
+// La etiqueta ocupa una línea arriba de cada campo; el botón se alinea con los campos.
+.confirm {
+  margin-top: 25px;
+}
+
+.error {
+  padding-left: 16px;
+  color: #b3261e;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.text-button {
+  margin-left: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--c-text);
+  font: 600 0.875rem var(--font-body);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+// Confirmación: un boleto de cine, con muescas y línea de corte hacia el talón.
+.ticket-shadow {
+  max-width: 520px;
+  filter: drop-shadow(0 12px 14px rgb(18 26 43 / 0.2));
+}
+
+.ticket {
+  --notch: 10px;
+  --stub: 96px;
+  --cut: calc(100% - var(--stub));
+
+  display: flex;
+  max-width: 520px;
+  border-radius: 12px;
+  background: #fffdf8;
+  outline: none;
+  // Dos medias máscaras recortan una muesca arriba y otra abajo, donde va la línea de corte.
+  mask:
+    radial-gradient(circle var(--notch) at var(--cut) 0, #0000 98%, #000) top / 100% 51% no-repeat,
+    radial-gradient(circle var(--notch) at var(--cut) 100%, #0000 98%, #000) bottom / 100% 51% no-repeat;
+  animation: reveal 260ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.ticket-main {
+  flex: 1;
+  min-width: 0;
+  padding: 18px 22px;
+}
+
+.ticket-kicker {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1f7a43;
+}
+
+.ticket-title {
+  margin: 2px 0 12px;
+  font: 800 1.75rem / 1 var(--font-display);
+}
+
+.ticket-data {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 28px;
+  margin: 0;
+
+  dt {
+    font-size: 0.75rem;
+    color: var(--c-muted);
+  }
+
+  dd {
+    margin: 2px 0 0;
+    font-weight: 600;
+  }
+}
+
+.ticket-stub {
+  display: grid;
+  place-content: center;
+  width: var(--stub);
+  flex: none;
+  border-left: 2px dashed var(--c-line);
+  text-align: center;
+}
+
+.stub-hours {
+  font: 800 2.25rem / 1 var(--font-display);
+  color: var(--c-accent-strong);
+}
+
+.stub-unit {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--c-muted);
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  color: var(--c-text);
+  font-weight: 600;
+  text-decoration: none;
+
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+    transition: transform 160ms;
+  }
+
+  &:hover mat-icon {
+    transform: translateX(3px);
+  }
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (max-width: 720px) {
+  .fields {
+    grid-template-columns: 1fr;
+  }
+
+  .confirm {
+    margin-top: 4px;
+  }
+
+  .ticket {
+    --stub: 68px;
+  }
+
+  .ticket-main {
+    padding: 16px 18px;
+  }
+
+  .stub-hours {
+    font-size: 1.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .form,
+  .ticket {
+    animation: none;
+  }
+
+  .rent,
+  .link mat-icon {
+    transition: none;
+  }
+}

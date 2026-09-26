@@ -9,10 +9,11 @@ import { PublicMoviesApi } from '../../../core/api/public-movies-api';
 import { PublicMovie } from '../../../core/models/movie';
 import { Poster } from '../../../shared/poster/poster';
 import { Score } from '../../../shared/score/score';
+import { RentPanel } from '../rent-panel/rent-panel';
 
 @Component({
   selector: 'app-movie-detail',
-  imports: [DatePipe, RouterLink, MatIconModule, Poster, Score],
+  imports: [DatePipe, RouterLink, MatIconModule, Poster, Score, RentPanel],
   templateUrl: './movie-detail.html',
   styleUrl: './movie-detail.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

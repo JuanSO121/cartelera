@@ -16,6 +16,7 @@
         <app-score [value]="m.score" size="large" />
         <p class="added">En cartelera desde el {{ m.createdAt | date: 'longDate' }}</p>
         <p class="description">{{ m.description }}</p>
+        <app-rent-panel [movie]="m" />
       </div>
     </div>
   } @else if (notFound()) {

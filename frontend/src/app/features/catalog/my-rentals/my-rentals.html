@@ -1,0 +1,76 @@
+<section class="page">
+  <h1>Mis alquileres</h1>
+  <p class="intro">Escribe el correo con el que alquilaste para ver tus películas.</p>
+
+  <form class="lookup" [formGroup]="lookupForm" (ngSubmit)="search()" novalidate>
+    <label class="field">
+      <span class="visually-hidden">Correo</span>
+      <mat-icon aria-hidden="true">mail</mat-icon>
+      <input type="email" placeholder="tu@correo.com" formControlName="email" autocomplete="email" />
+    </label>
+    <button type="submit" class="primary" [disabled]="loading()">
+      {{ loading() ? 'Buscando…' : 'Ver alquileres' }}
+    </button>
+  </form>
+  @if (emailControl.touched && emailControl.invalid) {
+    <p class="error">Escribe un correo válido.</p>
+  }
+
+  @if (rentals(); as list) {
+    <div aria-live="polite">
+      @if (list.length === 0) {
+        <div class="state">
+          <p>No encontramos alquileres para <strong>{{ email() }}</strong>.</p>
+          <p class="hint">Revisa que sea el mismo correo que usaste al alquilar.</p>
+        </div>
+      } @else {
+        @if (active().length > 0) {
+          <h2>Activos</h2>
+          <ul class="list">
+            @for (rental of active(); track rental.id) {
+              <li class="item" [class.overdue]="rental.overdue">
+                <app-poster class="thumb" [title]="rental.movieTitle" [showTitle]="false" />
+                <div class="body">
+                  @if (rental.movieAvailable === false) {
+                    <p class="title">{{ rental.movieTitle }}</p>
+                    <p class="tag">Ya no está en cartelera</p>
+                  } @else {
+                    <a class="title" [routerLink]="['/movies', rental.movieId]">{{ rental.movieTitle }}</a>
+                  }
+                  @if (rental.overdue) {
+                    <p class="status warn">
+                      <mat-icon aria-hidden="true">schedule</mat-icon>
+                      Vencido
+                    </p>
+                    <p class="meta">Desde el {{ rental.dueDate | date: "d 'de' MMMM, HH:mm" }}</p>
+                  } @else {
+                    <p class="status">
+                      Quedan {{ hoursLeft(rental) }} {{ hoursLeft(rental) === 1 ? 'hora' : 'horas' }}
+                    </p>
+                    <p class="meta">Hasta el {{ rental.dueDate | date: "EEEE d 'de' MMMM, HH:mm" }}</p>
+                  }
+                </div>
+                <button type="button" class="ghost" (click)="giveBack(rental)">Devolver</button>
+              </li>
+            }
+          </ul>
+        }
+
+        @if (history().length > 0) {
+          <h2>Historial</h2>
+          <ul class="list">
+            @for (rental of history(); track rental.id) {
+              <li class="item returned">
+                <app-poster class="thumb" [title]="rental.movieTitle" [showTitle]="false" />
+                <div class="body">
+                  <p class="title">{{ rental.movieTitle }}</p>
+                  <p class="meta">Devuelta el {{ rental.returnedAt | date: "d 'de' MMMM" }}</p>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      }
+    </div>
+  }
+</section>

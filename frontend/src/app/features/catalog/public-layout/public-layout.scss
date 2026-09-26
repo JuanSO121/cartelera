@@ -64,6 +64,44 @@
   color: var(--c-text);
 }
 
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+// Acción del público: más presente que "Administrar", que es para el equipo.
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--c-text);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: none;
+  text-underline-offset: 6px;
+
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+    color: var(--c-accent-strong);
+  }
+
+  &:hover,
+  &.active {
+    text-decoration: underline;
+    text-decoration-color: var(--c-accent);
+    text-decoration-thickness: 2px;
+  }
+}
+
+.nav-link:focus-visible {
+  outline: 2px solid var(--c-accent-strong);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
 .brand:focus-visible,
 .admin-link:focus-visible {
   outline: 2px solid var(--c-accent-strong);
@@ -73,4 +111,21 @@
 
 .content {
   padding-bottom: 64px;
+}
+
+@media (max-width: 520px) {
+  .nav {
+    gap: 14px;
+  }
+
+  .admin-link {
+    gap: 0;
+    font-size: 0; // oculta el texto visualmente; los lectores de pantalla lo siguen leyendo
+
+    mat-icon {
+      width: 22px;
+      height: 22px;
+      font-size: 22px;
+    }
+  }
 }

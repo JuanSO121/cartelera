@@ -17,11 +17,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @Service
 @Transactional(readOnly = true)
 public class MovieService {
 
     static final int MAX_PAGE_SIZE = 50;
+    static final int MAX_AVAILABILITY_IDS = 100;
 
     private final MovieRepository repository;
     private final CoverStorageService coverStorage;
@@ -44,6 +47,21 @@ public class MovieService {
         return repository.findByIdAndStatus(id, MovieStatus.PUBLISHED)
                 .map(PublicMovieResponse::from)
                 .orElseThrow(() -> new MovieNotFoundException(id));
+    }
+
+    /**
+     * De una lista de ids, devuelve los que están publicados. Lo usa rental-service para
+     * marcar los alquileres activos cuya película salió del catálogo, con una sola llamada.
+     */
+    public List<Long> findPublishedIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        if (ids.size() > MAX_AVAILABILITY_IDS) {
+            throw new InvalidRequestException(
+                    "Se pueden consultar hasta " + MAX_AVAILABILITY_IDS + " películas a la vez");
+        }
+        return repository.findIdsByIdInAndStatus(ids, MovieStatus.PUBLISHED);
     }
 
     // ---------- Área administrativa: todas las películas ----------

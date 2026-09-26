@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/movies")
 @Tag(name = "Películas (público)", description = "Solo películas publicadas")
@@ -33,6 +35,14 @@ public class PublicMovieController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size) {
         return movieService.findPublished(search, sort, page, size);
+    }
+
+    @GetMapping("/published-ids")
+    @Operation(summary = "De una lista de ids, devuelve los que están publicados (máx. 100)")
+    public List<Long> publishedIds(
+            @Parameter(description = "Ids separados por coma, por ejemplo 15,16")
+            @RequestParam List<Long> ids) {
+        return movieService.findPublishedIds(ids);
     }
 
     @GetMapping("/{id}")
