@@ -21,7 +21,9 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -108,6 +110,37 @@ class RentalServiceTest {
         assertThat(response.returnedAt()).isEqualTo(NOW);
         assertThatThrownBy(() -> rentalService.returnRental(5L, "ana@correo.com"))
                 .isInstanceOf(RentalConflictException.class);
+    }
+
+    @Test
+    void activeRentalOfMovieRemovedFromCatalogIsMarkedUnavailable() {
+        Rental stillPublished = new Rental(16L, "Dune: Parte dos", "Ana", "ana@correo.com",
+                NOW.minus(Duration.ofHours(5)), NOW.plus(Duration.ofHours(43)));
+        Rental removed = new Rental(17L, "Pulp Fiction", "Ana", "ana@correo.com",
+                NOW.minus(Duration.ofHours(2)), NOW.plus(Duration.ofHours(46)));
+        when(repository.findByCustomerEmailOrderByRentedAtDesc("ana@correo.com"))
+                .thenReturn(List.of(removed, stillPublished));
+        when(movieClient.findPublishedIds(Set.of(16L, 17L))).thenReturn(Optional.of(Set.of(16L)));
+
+        List<RentalResponse> rentals = rentalService.findByEmail("ana@correo.com");
+
+        assertThat(rentals).extracting(RentalResponse::movieTitle, RentalResponse::movieAvailable)
+                .containsExactly(
+                        org.assertj.core.groups.Tuple.tuple("Pulp Fiction", false),
+                        org.assertj.core.groups.Tuple.tuple("Dune: Parte dos", true));
+    }
+
+    @Test
+    void rentalsAreListedEvenIfMovieServiceIsDown() {
+        Rental rental = new Rental(16L, "Dune: Parte dos", "Ana", "ana@correo.com",
+                NOW.minus(Duration.ofHours(5)), NOW.plus(Duration.ofHours(43)));
+        when(repository.findByCustomerEmailOrderByRentedAtDesc("ana@correo.com")).thenReturn(List.of(rental));
+        when(movieClient.findPublishedIds(Set.of(16L))).thenReturn(Optional.empty());
+
+        List<RentalResponse> rentals = rentalService.findByEmail("ana@correo.com");
+
+        assertThat(rentals).hasSize(1);
+        assertThat(rentals.getFirst().movieAvailable()).isNull();
     }
 
     @Test

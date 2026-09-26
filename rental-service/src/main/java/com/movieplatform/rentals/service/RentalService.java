@@ -17,6 +17,9 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
@@ -55,13 +58,25 @@ public class RentalService {
                 now,
                 now.plus(properties.rentalDuration()));
 
-        return RentalResponse.from(repository.save(rental), now);
+        return RentalResponse.from(repository.save(rental), now, true);
     }
 
+    /**
+     * Alquileres de un correo. Los activos se respetan hasta su vencimiento aunque la película
+     * salga del catálogo; en ese caso se marcan con movieAvailable = false para avisar.
+     */
     public List<RentalResponse> findByEmail(String email) {
         Instant now = clock.instant();
-        return repository.findByCustomerEmailOrderByRentedAtDesc(normalizeEmail(email)).stream()
-                .map(rental -> RentalResponse.from(rental, now))
+        List<Rental> rentals = repository.findByCustomerEmailOrderByRentedAtDesc(normalizeEmail(email));
+
+        Set<Long> activeMovieIds = rentals.stream()
+                .filter(rental -> rental.getStatus() == RentalStatus.ACTIVE)
+                .map(Rental::getMovieId)
+                .collect(Collectors.toSet());
+        Optional<Set<Long>> published = movieClient.findPublishedIds(activeMovieIds);
+
+        return rentals.stream()
+                .map(rental -> RentalResponse.from(rental, now, availability(rental, published)))
                 .toList();
     }
 
@@ -78,6 +93,13 @@ public class RentalService {
         Instant now = clock.instant();
         rental.markReturned(now);
         return RentalResponse.from(rental, now);
+    }
+
+    private static Boolean availability(Rental rental, Optional<Set<Long>> published) {
+        if (rental.getStatus() != RentalStatus.ACTIVE) {
+            return null;
+        }
+        return published.map(ids -> ids.contains(rental.getMovieId())).orElse(null);
     }
 
     private static String normalizeEmail(String email) {

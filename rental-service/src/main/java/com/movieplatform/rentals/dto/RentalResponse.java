@@ -14,9 +14,18 @@ public record RentalResponse(
         Instant dueDate,
         Instant returnedAt,
         RentalStatus status,
-        boolean overdue
+        boolean overdue,
+        /**
+         * Solo en alquileres activos: si la película sigue publicada. {@code null} cuando no aplica
+         * (devuelto) o no se pudo verificar (movie-service no respondió).
+         */
+        Boolean movieAvailable
 ) {
     public static RentalResponse from(Rental rental, Instant now) {
+        return from(rental, now, null);
+    }
+
+    public static RentalResponse from(Rental rental, Instant now, Boolean movieAvailable) {
         return new RentalResponse(
                 rental.getId(),
                 rental.getMovieId(),
@@ -26,7 +35,8 @@ public record RentalResponse(
                 rental.getDueDate(),
                 rental.getReturnedAt(),
                 rental.getStatus(),
-                rental.isOverdue(now)
+                rental.isOverdue(now),
+                movieAvailable
         );
     }
 }
