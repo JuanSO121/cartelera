@@ -45,11 +45,18 @@ public class RentalService {
         // Primero se valida contra movie-service: solo se alquilan películas publicadas.
         MovieSummary movie = movieClient.findPublished(request.movieId());
 
-        if (repository.existsByMovieIdAndCustomerEmailAndStatus(movie.id(), email, RentalStatus.ACTIVE)) {
-            throw new RentalConflictException("Ya tienes un alquiler activo de \"" + movie.title() + "\"");
-        }
-
         Instant now = clock.instant();
+
+        // Un vencido sigue activo hasta que se devuelve: el mensaje lo distingue para que
+        // la persona sepa qué hacer, en lugar de un "ya lo tienes" que no se entiende.
+        repository.findFirstByMovieIdAndCustomerEmailAndStatus(movie.id(), email, RentalStatus.ACTIVE)
+                .ifPresent(existing -> {
+                    throw new RentalConflictException(existing.isOverdue(now)
+                            ? "Tienes un alquiler vencido de \"" + movie.title()
+                              + "\". Devuélvelo en Mis alquileres antes de volver a alquilarla"
+                            : "Ya tienes un alquiler activo de \"" + movie.title() + "\"");
+                });
+
         Rental rental = new Rental(
                 movie.id(),
                 movie.title(),

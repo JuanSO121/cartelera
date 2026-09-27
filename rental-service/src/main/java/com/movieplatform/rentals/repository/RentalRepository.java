@@ -12,7 +12,8 @@ public interface RentalRepository extends JpaRepository<Rental, Long> {
     /** Los correos se guardan normalizados (minúsculas, sin espacios). */
     List<Rental> findByCustomerEmailOrderByRentedAtDesc(String customerEmail);
 
-    boolean existsByMovieIdAndCustomerEmailAndStatus(Long movieId, String customerEmail, RentalStatus status);
+    /** El alquiler activo de esa película para ese correo, si existe (a lo sumo hay uno). */
+    Optional<Rental> findFirstByMovieIdAndCustomerEmailAndStatus(Long movieId, String customerEmail, RentalStatus status);
 
     Optional<Rental> findByIdAndCustomerEmail(Long id, String customerEmail);
 }

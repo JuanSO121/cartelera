@@ -55,8 +55,8 @@ class RentalServiceTest {
     @Test
     void rentsPublishedMovieForFortyEightHoursWithNormalizedEmail() {
         when(movieClient.findPublished(16L)).thenReturn(new MovieSummary(16L, "Dune: Parte dos"));
-        when(repository.existsByMovieIdAndCustomerEmailAndStatus(16L, "ana@correo.com", RentalStatus.ACTIVE))
-                .thenReturn(false);
+        when(repository.findFirstByMovieIdAndCustomerEmailAndStatus(16L, "ana@correo.com", RentalStatus.ACTIVE))
+                .thenReturn(Optional.empty());
         when(repository.save(any(Rental.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         RentalResponse response = rentalService.rent(new RentalRequest(16L, " Ana ", "  Ana@Correo.com "));
@@ -80,12 +80,31 @@ class RentalServiceTest {
 
     @Test
     void cannotRentSameMovieTwiceWhileActive() {
+        Rental active = new Rental(16L, "Dune: Parte dos", "Ana", "ana@correo.com",
+                NOW.minus(Duration.ofHours(5)), NOW.plus(Duration.ofHours(43)));
         when(movieClient.findPublished(16L)).thenReturn(new MovieSummary(16L, "Dune: Parte dos"));
-        when(repository.existsByMovieIdAndCustomerEmailAndStatus(16L, "ana@correo.com", RentalStatus.ACTIVE))
-                .thenReturn(true);
+        when(repository.findFirstByMovieIdAndCustomerEmailAndStatus(16L, "ana@correo.com", RentalStatus.ACTIVE))
+                .thenReturn(Optional.of(active));
 
         assertThatThrownBy(() -> rentalService.rent(new RentalRequest(16L, "Ana", "ana@correo.com")))
-                .isInstanceOf(RentalConflictException.class);
+                .isInstanceOf(RentalConflictException.class)
+                .hasMessageContaining("Ya tienes un alquiler activo");
+
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void overdueRentalMustBeReturnedBeforeRentingAgain() {
+        Rental overdue = new Rental(15L, "Oppenheimer", "Ana", "ana@correo.com",
+                NOW.minus(Duration.ofDays(3)), NOW.minus(Duration.ofDays(1)));
+        when(movieClient.findPublished(15L)).thenReturn(new MovieSummary(15L, "Oppenheimer"));
+        when(repository.findFirstByMovieIdAndCustomerEmailAndStatus(15L, "ana@correo.com", RentalStatus.ACTIVE))
+                .thenReturn(Optional.of(overdue));
+
+        assertThatThrownBy(() -> rentalService.rent(new RentalRequest(15L, "Ana", "ana@correo.com")))
+                .isInstanceOf(RentalConflictException.class)
+                .hasMessageContaining("vencido")
+                .hasMessageContaining("Devuélvelo");
 
         verify(repository, never()).save(any());
     }
