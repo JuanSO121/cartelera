@@ -1,3 +1,6 @@
+# Levantar todo:            docker compose up --build   → http://localhost:8080
+# Solo la base (desarrollo): docker compose up -d postgres
+
 services:
   postgres:
     image: postgres:18
@@ -14,5 +17,40 @@ services:
       interval: 5s
       retries: 10
 
+  movie-service:
+    build: ./movie-service
+    environment:
+      DB_HOST: postgres
+      UPLOADS_DIR: /app/uploads
+    volumes:
+      - uploads:/app/uploads
+    ports:
+      - "8081:8081" # Swagger: http://localhost:8081/swagger-ui.html
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  rental-service:
+    build: ./rental-service
+    environment:
+      DB_HOST: postgres
+      MOVIE_SERVICE_URL: http://movie-service:8081
+    ports:
+      - "8082:8082" # Swagger: http://localhost:8082/swagger-ui.html
+    depends_on:
+      postgres:
+        condition: service_healthy
+      movie-service:
+        condition: service_started
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - movie-service
+      - rental-service
+
 volumes:
   pgdata:
+  uploads:
