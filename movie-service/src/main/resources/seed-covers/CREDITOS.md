@@ -1,9 +1,5 @@
 # Portadas de prueba
 
-Las imágenes de esta carpeta se usan solo como datos de demostración.
-Si son pósters oficiales, pertenecen a sus respectivos estudios y distribuidoras.
-Si son fotos de bancos libres (Unsplash, Pexels), anotar autor y enlace:
+Las imágenes de esta carpeta se utilizan únicamente como recursos temporales para pruebas durante el desarrollo de la aplicación.
 
-| Archivo | Fuente |
-|---|---|
-| toy-story-5.jpg | |
+Todas las imágenes pertenecen a sus respectivos autores o titulares de derechos. Su inclusión tiene fines exclusivamente académicos, investigativos y de aprendizaje, sin fines comerciales ni de distribución.
